@@ -148,7 +148,7 @@ FROM employment_data;
 ## 🐍 Stage 3 — Python Analysis
 
 **Tool:** Python (Pandas, Matplotlib, Seaborn)  
-**Notebook:** [`python/employment_analysis.ipynb`](python/employment_analysis.ipynb)
+**Notebook:** [`python/employment_data.ipynb`](https://github.com/dharanipopuri888/uk-employment-trends-analysis/blob/main/employment_data.ipynb)
 
 Built on the SQL-exported dataset (`sql_employment_data.csv`), the Python stage adds:
 
