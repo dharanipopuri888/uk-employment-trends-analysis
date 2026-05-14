@@ -166,7 +166,7 @@ Built on the SQL-exported dataset (`sql_employment_data.csv`), the Python stage 
 ## 📊 Stage 4 — Power BI Dashboard
 
 **Tool:** Power BI Desktop  
-**File:** [`powerbi/Employment_Trends_Dashboard.pbix`](powerbi/Employment_Trends_Dashboard.pbix)
+**File:** [`powerbi/Employment_Trends_Dashboard.pbix`](https://github.com/dharanipopuri888/uk-employment-trends-analysis/blob/main/Employment%20Trends%20Dashboard.pbix)
 
 The final dashboard consumes the SQL view export and the Python-enriched dataset to provide interactive reporting:
 
