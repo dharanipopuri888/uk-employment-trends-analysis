@@ -84,7 +84,7 @@ The raw ONS data was split into **separate sheets per year** (2009, 2010, … 20
 5. **Data type enforcement** — Changed employment columns to `Number` type.
 6. **Validation checks** — Created check columns for FT + PT = Total mismatches; applied conditional formatting to highlight errors; summarised OK vs Mismatch counts.
 
-**Output:** `workplace_employment_Cleaned.xlsx` → exported as `employment_data.csv`
+**Output:** [workplace_employment_Cleaned.xlsx](https://github.com/dharanipopuri888/uk-employment-trends-analysis/blob/main/workplace%20employment%20Cleaned.xlsx) → exported as [employment_data.csv](
 
 ---
 
