@@ -150,16 +150,120 @@ FROM employment_data;
 **Tool:** Python (Pandas, Matplotlib, Seaborn)  
 **Notebook:** [`python/employment_data.ipynb`](https://github.com/dharanipopuri888/uk-employment-trends-analysis/blob/main/employment_data.ipynb)
 
-Built on the SQL-exported dataset (`sql_employment_data.csv`), the Python stage adds:
+### 3.1 Setup & Data Loading
+```python
+import pandas as pd
 
-- **Exploratory Data Analysis (EDA)** — `.describe()`, null checks, distribution plots
-- **Year-over-year growth** — Computed `yoy_growth_percent` via `.pct_change()` grouped by authority
-- **Sector share trends** — Line charts showing public vs private sector share per year
-- **Top/bottom authority comparisons** — Bar charts of highest/lowest employment boroughs
-- **Correlation analysis** — Heatmaps of employment metrics
-- **Time-series trends** — Total employment trajectory across 2009–2019 for nations and regions
+df = pd.read_csv("sql_employment_data.csv")
+pd.set_option('display.max_rows', 532)
+pd.set_option('display.max_columns', 25)
+```
 
-**Output:** `python_employment_data.csv` (enriched with `yoy_growth_percent`, `prev_year_employment`, `Public/Private_sector_share`)
+### 3.2 Structure & Descriptive Statistics
+```python
+df.info()                           # 528 rows, 19 columns, dtypes confirmed
+df.describe().drop(columns='Year')  # summary stats excluding Year
+df.isnull().sum()                   # confirmed 0 nulls in any column
+```
+
+### 3.3 Cleaning
+```python
+# Strip whitespace from text columns
+df["Local_Authority_County"] = df["Local_Authority_County"].str.strip()
+df["Code"]                   = df["Code"].str.strip()
+df["Authority_Type"]         = df["Authority_Type"].str.strip()
+
+# Fill any remaining NaN with 0
+df.fillna(0, inplace=True)
+
+# Remove rows with out-of-range Year values
+df = df[df["Year"].between(1900, 2100)]
+```
+
+### 3.4 Re-Validation
+```python
+df["Validation_Status"] = df.apply(
+    lambda row: "Invalid" if (
+        abs(row["Public_Tot_employees"]  - (row["Public_FT_employees"]  + row["Public_PT_employees"]))  > 0 or
+        abs(row["Private_Tot_employees"] - (row["Private_FT_employees"] + row["Private_PT_employees"])) > 0 or
+        abs(row["Total_Tot_employees"]   - (row["Total_FT_Employees"]   + row["Total_PT_Employees"]))   > 0 or
+        abs(row["Total_Tot_employees"]   - (row["Public_Tot_employees"] + row["Private_Tot_employees"])) > 0
+    ) else "Valid",
+    axis=1
+)
+# Result → Invalid: 380  |  Valid: 148
+```
+
+### 3.5 Feature Engineering
+```python
+# Public and private sector share as % of total employment
+df["Public_sector_share"]  = round(df["Public_Tot_employment"]  * 100 / df["Total_Employment"], 2)
+df["Private_sector_share"] = round(df["Private_Tot_employment"] * 100 / df["Total_Employment"], 2)
+
+# Full-time to part-time ratio
+df["ft_to_pt_ratio"] = df["Total_FT_Employees"] / df["Total_PT_Employees"].replace(0, pd.NA)
+```
+
+### 3.6 Authority-Level Aggregation
+```python
+authority_summary = df.groupby("Authority_Type").agg({
+    "Total_Employment":    ["sum", "mean", "min", "max"],
+    "Public_sector_share": "mean",
+    "Private_sector_share":"mean"
+}).reset_index()
+```
+
+| Authority_Type | Total (sum) | Mean | Min | Max |
+|----------------|-------------|------|-----|-----|
+| Aggregate | 320,983,782 | 29,180,344 | 27,671,593 | 31,087,571 |
+| Local Authority | 106,688,754 | 277,114 | 44,230 | 3,420,838 |
+| Nation | 320,983,783 | 9,726,781 | 1,254,284 | 27,153,990 |
+| Region | 278,880,860 | 2,816,978 | 1,031,288 | 5,368,796 |
+
+### 3.7 Top 5 Authorities by Total Employment
+```python
+# Filtered to Local Authority and Region only (excludes Nation/Aggregate totals)
+filtered_df = df[df["Authority_Type"].isin(["Local Authority", "Region"])]
+top_5 = filtered_df.groupby("Local_Authority_County")["Total_Employment"].sum().nlargest(5)
+```
+
+| Rank | Area | Total Employment (2009–2019) |
+|------|------|------------------------------|
+| 1 | London | 53,349,093 |
+| 2 | South East | 45,052,011 |
+| 3 | North West | 35,612,590 |
+| 4 | Inner London | 33,176,453 |
+| 5 | East | 29,415,132 |
+
+### 3.8 Year-over-Year Growth Analysis
+```python
+df_sorted = df.sort_values(["Local_Authority_County", "Year"])
+
+# Shift employment by 1 year within each authority
+df_sorted["prev_year_employment"] = df_sorted.groupby("Local_Authority_County")["Total_Employment"].shift(1)
+
+# Calculate YoY % growth
+df_sorted["yoy_growth_percent"] = round(
+    (df_sorted["Total_Employment"] - df_sorted["prev_year_employment"]) * 100 /
+    df_sorted["prev_year_employment"].replace(0, pd.NA), 2
+)
+
+# Fill NaN for base year (2009) rows — no prior year available
+df_sorted["yoy_growth_percent"] = df_sorted["yoy_growth_percent"].fillna("N/A")
+```
+
+- **Top 10 highest-growth rows** identified — including Hounslow (2015), Kingston upon Thames (2015), Newham (2012), Tower Hamlets (2011)
+- **Negative growth rows** extracted separately for decline analysis — including Barking & Dagenham (2018), Barnet (2010, 2016)
+
+### 3.9 Export
+```python
+df_sorted.to_csv("python_employment_data.csv", index=False)
+```
+
+**Output:** `python_employment_data.csv` — 528 rows × 23 columns  
+*New columns added:* `Public_sector_share`, `Private_sector_share`, `ft_to_pt_ratio`, `prev_year_employment`, `yoy_growth_percent`
+
+---
 
 ---
 
