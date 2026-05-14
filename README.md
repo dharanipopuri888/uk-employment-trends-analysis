@@ -91,7 +91,7 @@ The raw ONS data was split into **separate sheets per year** (2009, 2010, … 20
 ## 🛢️ Stage 2 — SQL Analysis (MySQL)
 
 **Tool:** MySQL Workbench  
-**Script:** [employment_data.sql](https://github.com/YOUR_USERNAME/YOUR_REPOSITORY/blob/main/sql/employment_data.sql)
+**Script:** [employment_data.sql](https://github.com/dharanipopuri888/uk-employment-trends-analysis/blob/main/employment_data.sql)
 
 ### Table Structure
 ```sql
